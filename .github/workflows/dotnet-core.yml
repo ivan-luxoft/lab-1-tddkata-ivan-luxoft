@@ -27,6 +27,7 @@ jobs:
         run: |
           New-Item -Path .\.sonar\scanner -ItemType Directory
           dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
+          echo "true" | Out-File -FilePath $env:ACTIONS_ALLOW_UNSECURE_COMMANDS -Encoding utf8 -Append
           
       - name: Setup MSBuild Path
         uses: warrenbuckley/Setup-MSBuild@v1
