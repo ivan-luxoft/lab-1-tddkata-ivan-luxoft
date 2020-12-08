@@ -27,6 +27,16 @@ jobs:
         run: |
           New-Item -Path .\.sonar\scanner -ItemType Directory
           dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
+          
+      - name: Setup MSBuild Path
+        uses: warrenbuckley/Setup-MSBuild@v1
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v1.0.2
+
+      - name: Restore NuGet Packages
+        run: nuget restore Exercise.sln
+
       - name: Build and analyze
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
@@ -34,5 +44,5 @@ jobs:
         shell: powershell
         run: |
           .\.sonar\scanner\dotnet-sonarscanner begin /k:"test-test-123" /o:"ivan-luxoft" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
-          <your build command>
+          msbuild Exercise.sln /p:Configuration=Release /p:DeployOnBuild=true /p:PublishProfile=FolderProfile
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
