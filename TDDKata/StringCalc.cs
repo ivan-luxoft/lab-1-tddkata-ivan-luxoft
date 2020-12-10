@@ -10,6 +10,9 @@ namespace TDDKata
 {
     internal class StringCalc
     {
+        private const int ERROR = -1;
+        private const int MAX_VALID_NUMBER = 1000;
+
         internal int Sum(string v)
         {
             ReadOnlyCollection<int> arrayOfInteger;
@@ -19,15 +22,13 @@ namespace TDDKata
             }
             catch
             {
-                return -1;
+                return ERROR;
             }
-
             if (arrayOfInteger.Count == 0)
-                return -1;
-
+                return ERROR;
             return arrayOfInteger
-                .Select(i => i > 1000 ? 0 : i)
-                .Aggregate((i1, i2) => i1 + i2);
+                .Select(i => i > MAX_VALID_NUMBER ? 0 : i)
+                .Sum();
         }
 
         private class ArgumentSplitter
@@ -40,9 +41,7 @@ namespace TDDKata
             public ArgumentSplitter(string argumentsString)
             {
                 if (argumentsString == "")
-                {
                     arguments.Add(0);
-                }
                 else if (argumentsString != null)
                 {
                     var stringArgWoDelimeter = FindDelimeterAndReturnArgumentsRow(argumentsString);
@@ -57,38 +56,45 @@ namespace TDDKata
             private int[] SplitStringToArrayInt(string arg)
             {
                 var splitedArguments = arg.Split(this.delimeters);
+                ValidateSplitedArguments(splitedArguments);
+                return splitedArguments
+                    .Select(s => int.Parse(s, NumberStyles.None))
+                    .ToArray();
+            }
 
+            private static void ValidateSplitedArguments(string[] splitedArguments)
+            {
                 if (splitedArguments.Any(s => s.Equals("")))
                     throw new ArgumentException("Between delimeters cannot be empty space");
+                foreach (var splitedArgument in splitedArguments)
+                {
+                    if (!int.TryParse(splitedArgument, out int _))
+                        throw new ArgumentException("Between delimeters should be only digits");
+                }
+            }
 
-                try
-                {
-                    return splitedArguments
-                        .Select(s => int.Parse(s, NumberStyles.None))
-                        .ToArray();
-                }
-                catch (Exception ex)
-                {
-                    throw new ArgumentException("Between delimeters should be only digits", ex);
-                }
+            private void ValidateCustomDelimeter(char[] customDelimeter)
+            {
+                if (customDelimeter.Length != 1)
+                    throw new ArgumentException("Custom delimeter length must be one symbol");
+                if (int.TryParse(customDelimeter[0].ToString(), out var _))
+                    throw new ArgumentException("Custom delimeter cannot be number");
+            }
+
+            private char[] GetCustomDelimeter(string arg)
+            {
+                var customDelimeterParameters = arg.Split('\n').First();
+                var customDelimeter = customDelimeterParameters.Skip(2).ToArray();
+                return customDelimeter;
             }
 
             private string FindDelimeterAndReturnArgumentsRow(string arg)
             {
                 if (!arg.StartsWith("//"))
                     return arg;
-
-                var customDelimeterParameters = arg.Split('\n').First();
-                var customDelimeter = customDelimeterParameters.Skip(2).ToArray();
-
-                if (customDelimeter.Length != 1)
-                    throw new ArgumentException("Custom delimeter length must be one symbol");
-
-                if (int.TryParse(customDelimeter[0].ToString(), out var _))
-                    throw new ArgumentException("Custom delimeter cannot be number");
-
-                this.delimeters = customDelimeter;
-                return arg.Replace($"{customDelimeterParameters}\n", "");
+                this.delimeters = GetCustomDelimeter(arg);
+                ValidateCustomDelimeter(this.delimeters);
+                return arg.Replace($"//{new string(this.delimeters)}\n", "");
             }
         }
     }
