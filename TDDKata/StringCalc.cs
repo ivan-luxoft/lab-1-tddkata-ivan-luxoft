@@ -8,9 +8,6 @@ using System.Linq;
 
 namespace TDDKata
 {
-    public class LogicException : Exception { }
-
-
     internal class StringCalc
     {
         internal int Sum(string v)
